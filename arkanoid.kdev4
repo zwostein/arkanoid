@@ -1,0 +1,4 @@
+[Project]
+Name=arkanoid
+Manager=KDevCMakeManager
+VersionControl=kdevgit
