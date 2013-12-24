@@ -2,6 +2,9 @@
 #define _GENERIC_H_
 
 
+#include <set>
+
+
 namespace generic
 {
 	namespace model
@@ -46,6 +49,15 @@ namespace generic
 			virtual void setWidth( const double & width ) = 0;
 			virtual void setHeight( const double & height ) = 0;
 		};
+
+		class AModel : public AUpdateable
+		{
+		public:
+			virtual bool addUpdateable( AUpdateable * updateable ) = 0;
+			virtual bool removeUpdateable( AUpdateable * updateable ) = 0;
+			//Overrides AUpdateable:
+			virtual void update( const double & delta ) override = 0;
+		};
 	}
 
 	namespace view
@@ -54,6 +66,13 @@ namespace generic
 		{
 		public:
 			virtual void draw() const = 0;
+		};
+
+		class AView : public ADrawable
+		{
+		public:
+			virtual bool addDrawable( const ADrawable * drawable ) = 0;
+			virtual bool removeDrawable( const ADrawable * drawable ) = 0;
 		};
 	}
 
