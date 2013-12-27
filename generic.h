@@ -2,6 +2,10 @@
 #define _GENERIC_H_
 
 
+#include "Vector2.h"
+
+#include <unordered_set>
+#include <map>
 #include <set>
 
 
@@ -18,45 +22,77 @@ namespace generic
 		class ACollideable2D
 		{
 		public:
-			virtual bool collidePoint( const double & x, const double & y ) const = 0;
-			virtual bool collideCircle( const double & x, const double & y, const double & radius ) const = 0;
-			virtual bool collideLine( const double & fromX, const double & fromY, const double & toX, const double & toY ) const = 0;
+			virtual bool isCollisionEnabled() const { return true; }
+			virtual bool collide( ACollideable2D & other, const Vector2d & position, const Vector2d & depth ) = 0;
 		};
 
 		class APositionable2D
 		{
 		public:
-			virtual double getPositionX() const = 0;
-			virtual double getPositionY() const = 0;
-			virtual void setPositionX( const double & positionX ) = 0;
-			virtual void setPositionY( const double & positionY ) = 0;
+			virtual Vector2d getPosition() const = 0;
+			virtual void setPosition( const Vector2d & position ) = 0;
 		};
 
 		class AMoveable2D : public APositionable2D, public AUpdateable
 		{
 		public:
-			virtual double getVelocityX() const = 0;
-			virtual double getVelocityY() const = 0;
-			virtual void setVelocityX( const double & velocityX ) = 0;
-			virtual void setVelocityY( const double & velocityY ) = 0;
+			virtual Vector2d getVelocity() const = 0;
+			virtual void setVelocity( const Vector2d & velocity ) = 0;
 		};
 
 		class ABox2D : public APositionable2D
 		{
 		public:
-			virtual double getWidth() const = 0;
-			virtual double getHeight() const = 0;
-			virtual void setWidth( const double & width ) = 0;
-			virtual void setHeight( const double & height ) = 0;
+			virtual Vector2d getSize() const = 0;
+			virtual void setSize( const Vector2d & size ) = 0;
 		};
 
-		class AModel : public AUpdateable
+		class ACollideableBox2D : public ABox2D, public ACollideable2D
+		{
+		};
+
+		class ACollisionDetectorBox2D : public AUpdateable
+		{
+		public:
+			virtual bool addCollideable( ACollideableBox2D * collideable ) = 0;
+			virtual bool removeCollideable( ACollideableBox2D * collideable ) = 0;
+		};
+
+		class CollisionDetectorBox2D : public ACollisionDetectorBox2D
+		{
+		public:
+			//Overrides ACollisionDetectorBox2D:
+			virtual bool addCollideable( ACollideableBox2D * collideable ) override;
+			virtual bool removeCollideable( ACollideableBox2D * collideable ) override;
+			virtual void update( const double & delta ) override;
+		private:
+			std::set< ACollideableBox2D * > collideables;
+		};
+
+		class AModelUpdater : public AUpdateable
 		{
 		public:
 			virtual bool addUpdateable( AUpdateable * updateable ) = 0;
 			virtual bool removeUpdateable( AUpdateable * updateable ) = 0;
-			//Overrides AUpdateable:
-			virtual void update( const double & delta ) override = 0;
+		};
+
+		class AOrderedModelUpdater : public AModelUpdater
+		{
+		public:
+			virtual bool addUpdateable( generic::model::AUpdateable * updateable, int order ) = 0;
+		};
+
+		class OrderedModelUpdater : public AOrderedModelUpdater
+		{
+		public:
+			//Overrides AOrderedModelUpdater:
+			virtual bool addUpdateable( generic::model::AUpdateable * updateable, int order ) override;
+			virtual bool addUpdateable( AUpdateable * updateable ) override;
+			virtual bool removeUpdateable( AUpdateable * updateable ) override;
+			virtual void update( const double & delta ) override;
+		private:
+			std::multimap< int, generic::model::AUpdateable * > updateablesAsValues;
+			std::map< generic::model::AUpdateable *, int > updateablesAsKeys;
 		};
 	}
 
@@ -66,6 +102,26 @@ namespace generic
 		{
 		public:
 			virtual void draw() const = 0;
+		};
+
+		template <class T> class ARenderer : public ADrawable
+		{
+		public:
+			virtual bool addModel( const T * model ) = 0;
+			virtual bool removeModel( const T * model ) = 0;
+		};
+
+		template <class T> class AUnorderedRenderer : public ARenderer<T>
+		{
+		public:
+			virtual bool addModel( const T * model ) override final
+				{ return models.insert(model).second; }
+			virtual bool removeModel( const T * model ) override final
+				{ return models.erase(model) != 0; }
+			const std::unordered_set< const T * > & getModels() const
+				{ return models; }
+		private:
+			std::unordered_set< const T * > models;
 		};
 
 		class AView : public ADrawable

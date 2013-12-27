@@ -16,74 +16,69 @@ namespace arkanoid
 	{
 		using namespace ::generic::model;
 
-		class Model : public AModel
+		class Brick : public ACollideableBox2D
 		{
 		public:
-			//Overrides AModel:
-			virtual bool addUpdateable( AUpdateable * updateable ) override;
-			virtual bool removeUpdateable( AUpdateable * updateable ) override;
-			virtual void update( const double & delta ) override;
+			bool isDestroyed() const { return destroyed; }
+			//Overrides ACollideableBox2D:
+			virtual Vector2d getPosition() const override { return position; }
+			virtual void setPosition( const Vector2d & position ) override { this->position = position; }
+			virtual Vector2d getSize() const override { return size; }
+			virtual void setSize( const Vector2d & size ) override { this->size = size; }
+			virtual bool collide( ACollideable2D & other, const Vector2d & position, const Vector2d & depth ) override;
+			virtual bool isCollisionEnabled() const override { return !destroyed; }
 		private:
-			std::set< AUpdateable * > updateables;
+			Vector2d position = Vector2d(0.0,0.0);
+			Vector2d size = Vector2d(0.1,0.1);
+			bool destroyed = false;
 		};
 
-		class Brick : public ABox2D, public ACollideable2D
+		class Wall : public ACollideableBox2D
 		{
 		public:
-			//Overrides ABox2D:
-			virtual double getPositionX() const override { return positionX; }
-			virtual double getPositionY() const override { return positionY; }
-			virtual void setPositionX( const double & positionX ) override { this->positionX = positionX; }
-			virtual void setPositionY( const double & positionY ) override { this->positionY = positionY; }
-			virtual double getWidth() const override { return width; }
-			virtual double getHeight() const override { return height; }
-			virtual void setWidth( const double & width ) override { this->width = width; }
-			virtual void setHeight( const double & height ) override { this->height = height; }
-			//Overrides ACollideable2D:
-			virtual bool collidePoint( const double & x, const double & y ) const override;
-			virtual bool collideCircle( const double & x, const double & y, const double & radius ) const override;
-			virtual bool collideLine( const double & fromX, const double & fromY, const double & toX, const double & toY ) const override;
+			//Overrides ACollideableBox2D:
+			virtual Vector2d getPosition() const override { return position; }
+			virtual void setPosition( const Vector2d & position ) override { this->position = position; }
+			virtual Vector2d getSize() const override { return size; }
+			virtual void setSize( const Vector2d & size ) override { this->size = size; }
+			virtual bool collide( ACollideable2D & other, const Vector2d & position, const Vector2d & depth ) override;
 		private:
-			double positionX;
-			double positionY;
-			double width;
-			double height;
+			Vector2d position = Vector2d(0.0,0.0);;
+			Vector2d size = Vector2d(0.2,0.2);;
 		};
 
-		class Ball : public AMoveable2D
+		class Ball : public AMoveable2D, public ACollideableBox2D
 		{
 		public:
 			//Overrides AMoveable2D:
 			virtual void update( const double & delta ) override;
-			virtual double getPositionX() const override { return positionX; }
-			virtual double getPositionY() const override { return positionY; }
-			virtual void setPositionX( const double & positionX ) override { this->positionX = positionX; }
-			virtual void setPositionY( const double & positionY ) override { this->positionY = positionY; }
-			virtual double getVelocityX() const override { return velocityX; }
-			virtual double getVelocityY() const override { return velocityY; }
-			virtual void setVelocityX( const double & velocityX ) override { this->velocityX = velocityX; }
-			virtual void setVelocityY( const double & velocityY ) override { this->velocityY = velocityY; }
+			virtual Vector2d getVelocity() const override { return velocity; };
+			virtual void setVelocity( const Vector2d & velocity ) override { this->velocity = velocity; };
+			//Overrides ACollideableBox2D:
+			virtual Vector2d getPosition() const override { return position; }
+			virtual void setPosition( const Vector2d & position ) override { this->position = position; }
+			virtual Vector2d getSize() const override { return size; }
+			virtual void setSize( const Vector2d & size ) override { this->size = size; }
+			virtual bool collide( ACollideable2D & other, const Vector2d & position, const Vector2d & depth ) override;
 		private:
-			double positionX;
-			double positionY;
-			double velocityX;
-			double velocityY;
+			Vector2d position = Vector2d(0.0,0.0);
+			Vector2d size = Vector2d(0.1,0.1);
+			Vector2d velocity = Vector2d(0.3,0.6);
 		};
 
-		class Paddle : public ABox2D, public AUpdateable
+		class Paddle : public AMoveable2D, public ACollideableBox2D
 		{
 		public:
-			//Overrides AUpdateable:
+			//Overrides AMoveable2D:
 			virtual void update( const double & delta ) override;
-			//Overrides ABox2D:
-			virtual double getPositionX() const override { return positionX; }
-			virtual double getPositionY() const override { return positionY; }
-			virtual void setPositionX( const double & positionX ) override { this->positionX = positionX; }
-			virtual void setPositionY( const double & positionY ) override { this->positionY = positionY; }
-			virtual double getWidth() const override { return width; }
-			virtual double getHeight() const override { return height; }
-			virtual void setWidth( const double & width ) override { this->width = width; }
-			virtual void setHeight( const double & height ) override { this->height = height; }
+			virtual Vector2d getVelocity() const override;
+			virtual void setVelocity( const Vector2d & velocity ) override { /* nope we choose our own */ };
+			//Overrides ACollideableBox2D:
+			virtual Vector2d getPosition() const override { return position; }
+			virtual void setPosition( const Vector2d & position ) override { this->position = position; }
+			virtual Vector2d getSize() const override { return size; }
+			virtual void setSize( const Vector2d & size ) override { this->size = size; }
+			virtual bool collide( ACollideable2D & other, const Vector2d & position, const Vector2d & depth ) override;
 
 			void moveLeft() { movingLeft = true; movingRight = false; }
 			void stop() { movingLeft = false; movingRight = false; }
@@ -91,23 +86,17 @@ namespace arkanoid
 			void setSpeed( double speed ) { this->speed = speed; }
 		private:
 			double speed = 1.0;
-			double width = 0.25;
-			double height = 0.1;
-			double positionX = 0.0;
-			double positionY = 0.0;
+			Vector2d position = Vector2d( 0.0, 0.0 );
+			Vector2d size = Vector2d( 0.25, 0.1 );
 			bool movingLeft = false;
 			bool movingRight = false;
 		};
 
-		class Field : public AUpdateable, public ACollideable2D
+		class Field : public AUpdateable
 		{
 		public:
 			//Overrides AUpdateable:
 			virtual void update( const double & delta ) override;
-			//Overrides ACollideable2D:
-			virtual bool collidePoint( const double & x, const double & y ) const override;
-			virtual bool collideCircle( const double & x, const double & y, const double & radius ) const override;
-			virtual bool collideLine( const double & fromX, const double & fromY, const double & toX, const double & toY ) const override;
 		private:
 			std::vector< std::vector< Brick > > bricks;
 			std::vector< Ball > balls;
@@ -134,30 +123,32 @@ namespace arkanoid
 			SDL_GLContext glContext = nullptr;
 		};
 
-		class Brick : public ADrawable
+		class BallRenderer : public AUnorderedRenderer<::arkanoid::model::Ball>
 		{
 		public:
-			Brick( const ::arkanoid::model::Brick * model );
-			//Overrides ADrawable:
+			//Overrides AUnorderedRenderer:
 			virtual void draw() const override;
 		};
 
-		class Ball : public ADrawable
+		class PaddleRenderer : public AUnorderedRenderer<::arkanoid::model::Paddle>
 		{
 		public:
-			Ball( const ::arkanoid::model::Ball * model );
-			//Overrides ADrawable:
+			//Overrides AUnorderedRenderer:
 			virtual void draw() const override;
 		};
 
-		class Paddle : public ADrawable
+		class WallRenderer : public AUnorderedRenderer<::arkanoid::model::Wall>
 		{
 		public:
-			Paddle( const ::arkanoid::model::Paddle * model ) : model(model) {}
-			//Overrides ADrawable:
+			//Overrides AUnorderedRenderer:
 			virtual void draw() const override;
-		private:
-			const ::arkanoid::model::Paddle * model;
+		};
+
+		class BrickRenderer : public AUnorderedRenderer<::arkanoid::model::Brick>
+		{
+		public:
+			//Overrides AUnorderedRenderer:
+			virtual void draw() const override;
 		};
 	}
 
