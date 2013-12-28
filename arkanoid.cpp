@@ -95,14 +95,14 @@ void view::View::draw() const
 }
 
 
-bool model::Brick::collide( generic::model::ACollideable2D & other, const Vector2d & position, const Vector2d & depth )
+bool model::Brick::collide( generic::model::ACollideable2D & , const Vector2d & , const Vector2d &  )
 {
 	destroyed = true;
 	return false;
 }
 
 
-bool model::Wall::collide( generic::model::ACollideable2D & other, const Vector2d & position, const Vector2d & direction )
+bool model::Wall::collide( generic::model::ACollideable2D & , const Vector2d & , const Vector2d &  )
 {
 	return false;
 }
@@ -117,7 +117,7 @@ void model::Paddle::update( const double & delta )
 }
 
 
-bool model::Paddle::collide( ACollideable2D & other, const Vector2d & position, const Vector2d & depth )
+bool model::Paddle::collide( ACollideable2D & other, const Vector2d & , const Vector2d & depth )
 {
 	if( typeid(other) == typeid(model::Wall) )
 	{
@@ -144,7 +144,7 @@ void model::Ball::update( const double & delta )
 }
 
 
-bool model::Ball::collide( generic::model::ACollideable2D & other, const Vector2d & position, const Vector2d & depth )
+bool model::Ball::collide( generic::model::ACollideable2D & , const Vector2d & , const Vector2d & depth )
 {
 	this->position += depth;
 	this->velocity.reflect( depth.normalized() );
@@ -155,6 +155,120 @@ bool model::Ball::collide( generic::model::ACollideable2D & other, const Vector2
 		this->velocity += moveable->getVelocity();
 	}
 */
+	return true;
+}
+
+
+model::Level::Level()
+{
+	modelUpdater.addUpdateable( &collisionDetector, 1 );
+}
+
+model::Level::~Level()
+{
+	for( auto & m : balls )
+		delete m;
+	for( auto & m : walls )
+		delete m;
+	for( auto & m : bricks )
+		delete m;
+	for( auto & m : paddles )
+		delete m;
+}
+
+bool model::Level::takeWall( Wall * wall )
+{
+	if( !walls.insert( wall ).second )
+		return false;
+	return collisionDetector.addCollideable( wall );
+}
+
+bool model::Level::takeBrick( Brick * brick )
+{
+	if( !bricks.insert( brick ).second )
+		return false;
+	return collisionDetector.addCollideable( brick );
+}
+
+bool model::Level::takeBall( Ball * ball )
+{
+	if( !balls.insert( ball ).second )
+		return false;
+	if( !modelUpdater.addUpdateable( ball ) )
+		return false;
+	return collisionDetector.addCollideable( ball );
+}
+
+bool model::Level::takePaddle( Paddle * paddle )
+{
+	if( !paddles.insert( paddle ).second )
+		return false;
+	if( !modelUpdater.addUpdateable( paddle ) )
+		return false;
+	return collisionDetector.addCollideable( paddle );
+}
+
+void model::Level::update( const double & delta )
+{
+	for( auto & b : balls )
+	{
+		if( b->getPosition().y < -1.0 )
+		{
+			b->setPosition( Vector2d( 0.0, -0.7 ) );
+			b->setVelocity( Vector2d( 0.3, 0.6) );
+		}
+	}
+	modelUpdater.update( delta );
+}
+
+
+model::Level * model::SimpleLevelGenerator::generateNewLevel( unsigned int number )
+{
+	model::Level * level = new model::Level;
+
+	const Vector2i brickNum( number, number );
+	const Vector2d brickWallBL( -0.8, -0.2 );
+	const Vector2d brickWallTR( 0.8, 0.8 );
+	const Vector2d brickWallSize( brickWallTR - brickWallBL );
+	const Vector2d brickWallGridStep( brickWallSize.x/brickNum.x, brickWallSize.y/brickNum.y );
+	const Vector2d brickSize( 0.9*brickWallSize.x/brickNum.x, 0.9*brickWallSize.y/brickNum.y );
+
+	for( int y=0; y<brickNum.y; y++ )
+	{
+		for( int x=0; x<brickNum.x; x++ )
+		{
+			arkanoid::model::Brick * b = new arkanoid::model::Brick;
+			b->setPosition( Vector2d( brickWallBL.x + x * brickWallGridStep.x + brickSize.x/2.0, brickWallBL.y + y * brickWallGridStep.y + brickSize.y/2.0 ) );
+			b->setSize( brickSize );
+			level->takeBrick( b );
+		}
+	}
+
+	arkanoid::model::Wall * w;
+	w = new arkanoid::model::Wall;
+	w->setPosition( Vector2d(-0.95, 0.0 ) );
+	w->setSize( Vector2d( 0.1, 2.0 ) );
+	level->takeWall( w );
+	w = new arkanoid::model::Wall;
+	w->setPosition( Vector2d( 0.95, 0.0 ) );
+	w->setSize( Vector2d( 0.1, 2.0 ) );
+	level->takeWall( w );
+	w = new arkanoid::model::Wall;
+	w->setPosition( Vector2d( 0.0, 0.95 ) );
+	w->setSize( Vector2d( 2.0, 0.1 ) );
+	level->takeWall( w );
+
+	arkanoid::model::Ball * b = new arkanoid::model::Ball;
+	b->setPosition( Vector2d( 0.0, -0.7 ) );
+	b->setVelocity( Vector2d( 0.3, 0.6) );
+	b->setSize( Vector2d( 0.05, 0.05 ) );
+	level->takeBall( b );
+
+	arkanoid::model::Paddle * p = new arkanoid::model::Paddle;
+	p->setPosition( Vector2d(0.0,-0.9) );
+	p->setSize( Vector2d(0.5,0.1) );
+	level->takePaddle( p );
+	return level;
 }
 
 

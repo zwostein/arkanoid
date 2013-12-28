@@ -241,7 +241,7 @@ template<class T> struct Vector2
 	}
 
 	/// Returns the absolute angle.
-	inline const double angle()
+	inline double angle()
 	{
 		return atan2( y, x );
 	}

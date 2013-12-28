@@ -7,7 +7,7 @@
 #include <SDL2/SDL_opengl.h>
 
 #include <vector>
-#include <set>
+#include <unordered_set>
 
 
 namespace arkanoid
@@ -19,6 +19,8 @@ namespace arkanoid
 		class Brick : public ACollideableBox2D
 		{
 		public:
+			Brick() {}
+			virtual ~Brick() {}
 			bool isDestroyed() const { return destroyed; }
 			//Overrides ACollideableBox2D:
 			virtual Vector2d getPosition() const override { return position; }
@@ -36,6 +38,8 @@ namespace arkanoid
 		class Wall : public ACollideableBox2D
 		{
 		public:
+			Wall() {}
+			virtual ~Wall() {}
 			//Overrides ACollideableBox2D:
 			virtual Vector2d getPosition() const override { return position; }
 			virtual void setPosition( const Vector2d & position ) override { this->position = position; }
@@ -50,6 +54,8 @@ namespace arkanoid
 		class Ball : public AMoveable2D, public ACollideableBox2D
 		{
 		public:
+			Ball() {}
+			virtual ~Ball() {}
 			//Overrides AMoveable2D:
 			virtual void update( const double & delta ) override;
 			virtual Vector2d getVelocity() const override { return velocity; };
@@ -69,10 +75,12 @@ namespace arkanoid
 		class Paddle : public AMoveable2D, public ACollideableBox2D
 		{
 		public:
+			Paddle() {}
+			virtual ~Paddle() {}
 			//Overrides AMoveable2D:
 			virtual void update( const double & delta ) override;
 			virtual Vector2d getVelocity() const override;
-			virtual void setVelocity( const Vector2d & velocity ) override { /* nope we choose our own */ };
+			virtual void setVelocity( const Vector2d & ) override { /* nope we choose our own */ };
 			//Overrides ACollideableBox2D:
 			virtual Vector2d getPosition() const override { return position; }
 			virtual void setPosition( const Vector2d & position ) override { this->position = position; }
@@ -92,15 +100,46 @@ namespace arkanoid
 			bool movingRight = false;
 		};
 
-		class Field : public AUpdateable
+		class ALevel : public AUpdateable
 		{
 		public:
-			//Overrides AUpdateable:
+			virtual const std::unordered_set< Wall * > & getWalls() const = 0;
+			virtual const std::unordered_set< Brick * > & getBricks() const = 0;
+			virtual const std::unordered_set< Ball * > & getBalls() const = 0;
+			virtual const std::unordered_set< Paddle * > & getPaddles() const = 0;
+			virtual bool isGameOver() const = 0;
+		};
+
+		class Level : public ALevel
+		{
+		public:
+			Level();
+			virtual ~Level();
+			bool takeWall( Wall * wall );
+			bool takeBrick( Brick * brick );
+			bool takeBall( Ball * ball );
+			bool takePaddle( Paddle * paddle );
+			//Overrides ALevel:
+			virtual const std::unordered_set< Wall * > & getWalls() const override { return walls; }
+			virtual const std::unordered_set< Brick * > & getBricks() const override { return bricks; }
+			virtual const std::unordered_set< Ball * > & getBalls() const override { return balls; }
+			virtual const std::unordered_set< Paddle * > & getPaddles() const override { return paddles; }
 			virtual void update( const double & delta ) override;
+			virtual bool isGameOver() const override { return gameOver; }
 		private:
-			std::vector< std::vector< Brick > > bricks;
-			std::vector< Ball > balls;
-			Paddle paddle;
+			OrderedModelUpdater modelUpdater;
+			CollisionDetectorBox2D collisionDetector;
+			bool gameOver = false;
+			std::unordered_set< Wall * > walls;
+			std::unordered_set< Brick * > bricks;
+			std::unordered_set< Ball * > balls;
+			std::unordered_set< Paddle * > paddles;
+		};
+
+		class SimpleLevelGenerator
+		{
+		public:
+			static Level * generateNewLevel( unsigned int level );
 		};
 	}
 
@@ -112,13 +151,13 @@ namespace arkanoid
 		{
 		public:
 			View();
-			~View();
+			virtual ~View();
 			//Overrides AView:
 			virtual bool addDrawable( const ADrawable * drawable ) override;
 			virtual bool removeDrawable( const ADrawable * drawable ) override;
 			virtual void draw() const override;
 		private:
-			std::set< const ADrawable * > drawables;
+			std::unordered_set< const ADrawable * > drawables;
 			SDL_Window * window = nullptr;
 			SDL_GLContext glContext = nullptr;
 		};
@@ -126,6 +165,8 @@ namespace arkanoid
 		class BallRenderer : public AUnorderedRenderer<::arkanoid::model::Ball>
 		{
 		public:
+			BallRenderer() {}
+			virtual ~BallRenderer() {}
 			//Overrides AUnorderedRenderer:
 			virtual void draw() const override;
 		};
@@ -133,6 +174,8 @@ namespace arkanoid
 		class PaddleRenderer : public AUnorderedRenderer<::arkanoid::model::Paddle>
 		{
 		public:
+			PaddleRenderer() {}
+			virtual ~PaddleRenderer() {}
 			//Overrides AUnorderedRenderer:
 			virtual void draw() const override;
 		};
@@ -140,6 +183,8 @@ namespace arkanoid
 		class WallRenderer : public AUnorderedRenderer<::arkanoid::model::Wall>
 		{
 		public:
+			WallRenderer() {}
+			virtual ~WallRenderer() {}
 			//Overrides AUnorderedRenderer:
 			virtual void draw() const override;
 		};
@@ -147,6 +192,8 @@ namespace arkanoid
 		class BrickRenderer : public AUnorderedRenderer<::arkanoid::model::Brick>
 		{
 		public:
+			BrickRenderer() {}
+			virtual ~BrickRenderer() {}
 			//Overrides AUnorderedRenderer:
 			virtual void draw() const override;
 		};
@@ -171,7 +218,7 @@ namespace arkanoid
 		class PaddleAI
 		{
 		public:
-			PaddleAI( ::arkanoid::model::Paddle * model, ::arkanoid::model::Field * field );
+			PaddleAI( ::arkanoid::model::Paddle * model, ::arkanoid::model::Level * level );
 		};
 	}
 }

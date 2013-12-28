@@ -8,87 +8,40 @@
 #include <iostream>
 
 
-int main( int argc, char ** argv )
+int main( int , char **  )
 {
 	SDL_Init( SDL_INIT_EVENTS | SDL_INIT_TIMER );
 
 	// setup model
-	generic::model::OrderedModelUpdater * modelUpdater = new generic::model::OrderedModelUpdater;
-
-	generic::model::CollisionDetectorBox2D * collisionDetector = new generic::model::CollisionDetectorBox2D;
-	modelUpdater->addUpdateable( collisionDetector, 1 );
-
-	std::vector<arkanoid::model::Brick *> brickModels;
-	static const Vector2i brickNum( 5, 5 );
-	static const Vector2d brickWallBL( -0.8, -0.3 );
-	static const Vector2d brickWallTR( 0.8, 0.8 );
-	static const Vector2d brickWallSize( brickWallTR - brickWallBL );
-	static const Vector2d brickWallGridStep( brickWallSize.x/brickNum.x, brickWallSize.y/brickNum.y );
-	static const Vector2d brickSize( 0.9*brickWallSize.x/brickNum.x, 0.9*brickWallSize.y/brickNum.y );
-
-	for( int y=0; y<brickNum.y; y++ )
-	{
-		for( int x=0; x<brickNum.x; x++ )
-		{
-			arkanoid::model::Brick * b = new arkanoid::model::Brick;
-			b->setPosition( Vector2d( brickWallBL.x + x * brickWallGridStep.x + brickSize.x/2.0, brickWallBL.y + y * brickWallGridStep.y + brickSize.y/2.0 ) );
-			b->setSize( brickSize );
-			collisionDetector->addCollideable( b );
-			brickModels.push_back( b );
-		}
-	}
-
-	arkanoid::model::Wall * wallModels[3];
-	wallModels[0] = new arkanoid::model::Wall;
-	wallModels[0]->setPosition( Vector2d(-0.95, 0.0 ) );
-	wallModels[0]->setSize( Vector2d( 0.1, 2.0 ) );
-	collisionDetector->addCollideable( wallModels[0] );
-	wallModels[1] = new arkanoid::model::Wall;
-	wallModels[1]->setPosition( Vector2d( 0.95, 0.0 ) );
-	wallModels[1]->setSize( Vector2d( 0.1, 2.0 ) );
-	collisionDetector->addCollideable( wallModels[1] );
-	wallModels[2] = new arkanoid::model::Wall;
-	wallModels[2]->setPosition( Vector2d( 0.0, 0.95 ) );
-	wallModels[2]->setSize( Vector2d( 2.0, 0.1 ) );
-	collisionDetector->addCollideable( wallModels[2] );
-
-	arkanoid::model::Ball * ballModel = new arkanoid::model::Ball;
-	ballModel->setPosition( Vector2d( 0.0, -0.7 ) );
-	ballModel->setVelocity( Vector2d( 0.3, 0.6) );
-	ballModel->setSize( Vector2d( 0.05, 0.05 ) );
-	collisionDetector->addCollideable( ballModel );
-	modelUpdater->addUpdateable( ballModel );
-
-	arkanoid::model::Paddle * paddleModel = new arkanoid::model::Paddle;
-	paddleModel->setPosition( Vector2d(0.0,-0.9) );
-	paddleModel->setSize( Vector2d(0.5,0.1) );
-	collisionDetector->addCollideable( paddleModel );
-	modelUpdater->addUpdateable( paddleModel );
+	arkanoid::model::Level * level = arkanoid::model::SimpleLevelGenerator::generateNewLevel( 10 );
 
 	// setup view
 	arkanoid::view::View * view = new arkanoid::view::View;
 
 	arkanoid::view::BallRenderer * ballRenderer= new arkanoid::view::BallRenderer;
-	ballRenderer->addModel( ballModel );
+	for( auto & m : level->getBalls() )
+		ballRenderer->addModel( m );
 	view->addDrawable( ballRenderer );
 
 	arkanoid::view::PaddleRenderer * paddleRenderer = new arkanoid::view::PaddleRenderer;
-	paddleRenderer->addModel( paddleModel );
+	for( auto & m : level->getPaddles() )
+		paddleRenderer->addModel( m );
 	view->addDrawable( paddleRenderer );
 
 	arkanoid::view::WallRenderer * wallRenderer = new arkanoid::view::WallRenderer;
-	wallRenderer->addModel( wallModels[0] );
-	wallRenderer->addModel( wallModels[1] );
-	wallRenderer->addModel( wallModels[2] );
+	for( auto & m : level->getWalls() )
+		wallRenderer->addModel( m );
 	view->addDrawable( wallRenderer );
 
 	arkanoid::view::BrickRenderer * brickRenderer = new arkanoid::view::BrickRenderer;
-	for( const auto & b : brickModels )
-		brickRenderer->addModel( b );
+	for( auto & m : level->getBricks() )
+		brickRenderer->addModel( m );
 	view->addDrawable( brickRenderer );
 
+	std::unordered_set< arkanoid::controller::PaddlePlayer * > paddleControllers;
 	// setup controllers
-	arkanoid::controller::PaddlePlayer * paddleController = new arkanoid::controller::PaddlePlayer( paddleModel, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT );
+	for( auto & m : level->getPaddles() )
+		paddleControllers.insert( new arkanoid::controller::PaddlePlayer( m, SDL_SCANCODE_LEFT, SDL_SCANCODE_RIGHT ) );
 
 	Uint64 lastTime = SDL_GetPerformanceCounter();
 	bool run = true;
@@ -106,27 +59,18 @@ int main( int argc, char ** argv )
 		}
 
 		// let controllers process their input
-		paddleController->processInput();
+		for( auto & c : paddleControllers )
+			c->processInput();
 
 		// update model
 		Uint64 currentTime = SDL_GetPerformanceCounter();
 		double delta = (double)(currentTime - lastTime) / (double)SDL_GetPerformanceFrequency();
 		lastTime = currentTime;
-		modelUpdater->update( delta );
+		level->update( delta );
 
 		// draw the view
 		view->draw();
 	}
-
-	delete wallModels[0];
-	delete wallModels[1];
-	delete wallModels[2];
-	delete paddleModel;
-	delete ballModel;
-	for( const auto & b : brickModels )
-		delete b;
-	delete collisionDetector;
-	delete modelUpdater;
 
 	delete brickRenderer;
 	delete wallRenderer;
@@ -134,7 +78,10 @@ int main( int argc, char ** argv )
 	delete ballRenderer;
 	delete view;
 
-	delete paddleController;
+	for( auto & c : paddleControllers )
+		delete c;
+
+	delete level;
 
 	SDL_Quit();
 	return 0;

@@ -1,6 +1,6 @@
 project( arkanoid )
 cmake_minimum_required( VERSION 2.8 )
-set( CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
+set( CMAKE_CXX_FLAGS "-std=c++11 -Wall -Wextra ${CMAKE_CXX_FLAGS}")
 add_executable( arkanoid main.cpp arkanoid.cpp generic.cpp )
 target_link_libraries( arkanoid SDL2 GL GLU )
 install( TARGETS arkanoid RUNTIME DESTINATION bin )
