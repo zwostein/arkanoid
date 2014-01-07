@@ -1,6 +1,11 @@
-#include "generic.h"
-#include "arkanoid.h"
-
+#include <arkanoid/controller/PaddlePlayer.hpp>
+#include <arkanoid/view/WallRenderer.hpp>
+#include <arkanoid/view/BallRenderer.hpp>
+#include <arkanoid/view/BrickRenderer.hpp>
+#include <arkanoid/view/PaddleRenderer.hpp>
+#include <arkanoid/view/View.hpp>
+#include <arkanoid/model/Level.hpp>
+#include <arkanoid/model/SimpleLevelGenerator.hpp>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 

@@ -1,11 +1,14 @@
-#ifndef _VECTOR2__INCLUDED_
-#define _VECTOR2__INCLUDED_
-
+#ifndef _GENERIC_TYPE_VECTOR2_INCLUDED_
+#define _GENERIC_TYPE_VECTOR2_INCLUDED_
 
 #include <limits>
 #include <cassert>
 #include <cmath>
 
+namespace generic
+{
+	namespace type
+	{
 
 template<class T> struct Vector2
 {
@@ -288,5 +291,7 @@ template<class T> struct Vector2
 typedef Vector2<double> Vector2d;
 typedef Vector2<int> Vector2i;
 
+	}
+}
 
 #endif
