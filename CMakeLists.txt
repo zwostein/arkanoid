@@ -16,6 +16,7 @@ add_executable( arkanoid
 	src/arkanoid/model/Level.cpp
 	src/arkanoid/model/Paddle.cpp
 	src/arkanoid/model/SimpleLevelGenerator.cpp
+	src/arkanoid/model/LevelTextFile.cpp
 
 	src/arkanoid/view/View.cpp
 	src/arkanoid/view/BallRenderer.cpp

@@ -6,6 +6,7 @@
 #include <arkanoid/view/View.hpp>
 #include <arkanoid/model/Level.hpp>
 #include <arkanoid/model/SimpleLevelGenerator.hpp>
+#include <arkanoid/model/LevelTextFile.hpp>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_opengl.h>
 
@@ -18,7 +19,9 @@ int main( int , char **  )
 	SDL_Init( SDL_INIT_EVENTS | SDL_INIT_TIMER );
 
 	// setup model
-	arkanoid::model::Level * level = arkanoid::model::SimpleLevelGenerator::generateNewLevel( 10 );
+//	arkanoid::model::Level * level = arkanoid::model::SimpleLevelGenerator::generateNewLevel( 10 );
+	arkanoid::model::Level * level = arkanoid::model::LevelTextFile::load( "data/test.2.lvl" );
+
 
 	// setup view
 	arkanoid::view::View * view = new arkanoid::view::View;
