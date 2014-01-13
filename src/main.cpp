@@ -21,7 +21,8 @@ int main( int , char **  )
 	// setup model
 //	arkanoid::model::Level * level = arkanoid::model::SimpleLevelGenerator::generateNewLevel( 10 );
 	arkanoid::model::Level * level = arkanoid::model::LevelTextFile::load( "data/test.2.lvl" );
-
+	if( !level )
+		return 1;
 
 	// setup view
 	arkanoid::view::View * view = new arkanoid::view::View;

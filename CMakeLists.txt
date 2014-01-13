@@ -28,5 +28,13 @@ add_executable( arkanoid
 	src/generic/model/CollisionDetectorBox2D.cpp
 )
 
+find_package( Doxygen )
+if( DOXYGEN_FOUND )
+	add_custom_target( doc ${DOXYGEN_EXECUTABLE} Doxyfile )
+	set_directory_properties( PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "doc/html;doc/latex;" )
+else( DOXYGEN_FOUND )
+	message( "Doxygen not found - 'doc' can't be generated." )
+endif( DOXYGEN_FOUND )
+
 target_link_libraries( arkanoid SDL2 GL GLU )
 install( TARGETS arkanoid RUNTIME DESTINATION bin )

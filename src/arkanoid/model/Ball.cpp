@@ -12,16 +12,16 @@ void model::Ball::update( const double & delta )
 }
 
 
-bool model::Ball::collide( generic::model::ACollideable2D & , const Vector2d & , const Vector2d & depth )
+bool model::Ball::collide( generic::model::ACollideable2D & other, const Vector2d & , const Vector2d & depth )
 {
 	this->position += depth;
 	this->velocity.reflect( depth.normalized() );
-/*
+
 	generic::model::AMoveable2D * moveable = dynamic_cast<generic::model::AMoveable2D*>(&other);
 	if( moveable )
 	{
-		this->velocity += moveable->getVelocity();
+		this->velocity += moveable->getVelocity() * 0.333;
 	}
-*/
+
 	return true;
 }
